@@ -92,13 +92,7 @@ schedly/
 
 ## 🎥 Demo / GIFs
 
-*Add your usage GIFs here!*
-
-Example placeholder:
-
-```
-![Schedly Demo](demo/schedly-demo.gif)
-```
+![demo](demo/image.png)
 
 ---
 

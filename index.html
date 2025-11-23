@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Productivity Widget</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+        }
+
+        .header {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: #777;
+            margin-top: 6px;
+        }
+
+        .card {
+            margin-top: 20px;
+            width: 90%;
+            max-width: 450px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+        }
+
+        .day-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .day-selector button {
+            flex: 1;
+            padding: 8px 0;
+            border: none;
+            border-radius: 8px;
+            background: #e8ecf1;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+
+        .day-selector button.active {
+            background: #4460ff;
+            color: white;
+            font-weight: 600;
+        }
+
+        .todo-list {
+            margin-top: 10px;
+        }
+
+        .todo-item {
+            padding: 10px 12px;
+            background: #f2f4f7;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .add-section {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .add-section input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .add-section button {
+            padding: 8px 14px;
+            background: #4460ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Welcome, Esma ✨</h1>
+        <p>what are we getting done today?</p>
+    </div>
+
+    <!-- TODO SECTION -->
+    <div class="card" id="todoCard">
+        <div class="day-selector" id="todoDaySelector">
+            <button class="active">Mon</button>
+            <button>Tue</button>
+            <button>Wed</button>
+            <button>Thu</button>
+            <button>Fri</button>
+            <button>Sat</button>
+            <button>Sun</button>
+        </div>
+
+        <div class="todo-list" id="todoList"></div>
+
+        <div class="add-section">
+            <input type="text" id="taskInput" placeholder="New task..." />
+            <button onclick="addTask()">+</button>
+        </div>
+    </div>
+
+    <!-- TIMER SECTION -->
+    <div class="card" id="timerCard">
+        <h2 style="margin:0 0 10px 0; font-size:18px;">Timer ⏱️</h2>
+
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <div style="flex:1;">
+                <label>Work (min)</label>
+                <input type="number" id="workInput" value="25" min="1" style="width:100%; padding:6px; border-radius:6px; border:1px solid #ccc;" />
+            </div>
+            <div style="flex:1;">
+                <label>Break (min)</label>
+                <input type="number" id="breakInput" value="5" min="1" style="width:100%; padding:6px; border-radius:6px; border:1px solid #ccc;" />
+            </div>
+        </div>
+
+        <div id="timerDisplay" style="font-size:32px; text-align:center; margin:10px 0; font-weight:600;">25:00</div>
+
+        <div style="display:flex; gap:10px; justify-content:center;">
+            <button onclick="startTimer()" style="padding:8px 14px; background:#4460ff; color:white; border:none; border-radius:8px; cursor:pointer;">Start</button>
+            <button onclick="pauseTimer()" style="padding:8px 14px; background:#e8ecf1; border:none; border-radius:8px; cursor:pointer;">Pause</button>
+            <button onclick="resetTimer()" style="padding:8px 14px; background:#e8ecf1; border:none; border-radius:8px; cursor:pointer;">Reset</button>
+        </div>
+
+        <h3 style="margin-top:20px; font-size:16px;">Completed Sessions</h3>
+        <ul id="sessionLog" style="padding-left:20px; font-size:14px;"></ul>
+    </div>
+
+    <!-- WEEKLY SCHEDULE SECTION -->
+    <div class="card" id="scheduleCard">
+        <h2 style="margin:0 0 10px 0; font-size:18px;">Weekly Schedule 📚</h2>
+
+        <div class="day-selector" id="scheduleDaySelector">
+            <button class="active" onclick="changeScheduleDay('Mon', this)">Mon</button>
+            <button onclick="changeScheduleDay('Tue', this)">Tue</button>
+            <button onclick="changeScheduleDay('Wed', this)">Wed</button>
+            <button onclick="changeScheduleDay('Thu', this)">Thu</button>
+            <button onclick="changeScheduleDay('Fri', this)">Fri</button>
+            <button onclick="changeScheduleDay('Sat', this)">Sat</button>
+            <button onclick="changeScheduleDay('Sun', this)">Sun</button>
+        </div>
+
+        <div id="scheduleList" style="margin-top:10px;"></div>
+
+        <div class="add-section" style="flex-direction:column; gap:10px; margin-top:15px;">
+            <input type="text" id="courseName" placeholder="Course name (required)" />
+            <input type="time" id="courseTime" />
+            <input type="text" id="courseProf" placeholder="Professor (optional)" />
+            <input type="text" id="courseRoom" placeholder="Room (optional)" />
+            <label style="font-size:13px;">Color (optional)</label>
+            <input type="color" id="courseColor" value="#a6c8ff" style="width:50px; height:30px; padding:0; border:none;" />
+            <button onclick="addSchedule()" style="width:100%;">Add Course</button>
+        </div>
+    </div>
+
+    <!-- STUDY MODAL -->
+    <div id="studyModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center;">
+        <div style="background:white; padding:20px; border-radius:12px; width:300px; display:flex; flex-direction:column; gap:10px;">
+            <h3>Select Course</h3>
+            <select id="studyCourse" style="padding:8px; border-radius:6px; border:1px solid #ccc;"></select>
+            <button onclick="confirmCourse()" style="padding:8px; background:#4460ff; color:white; border:none; border-radius:8px; cursor:pointer;">Start</button>
+            <button onclick="closeModal()" style="padding:8px; background:#eee; border:none; border-radius:8px; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- DONUT CHART SECTION -->
+    <div class="card" id="studyCard" style="text-align:center; position:relative;">
+        <h2>Study Insights 📊</h2>
+        <canvas id="donutChart" width="300" height="300"></canvas>
+    </div>
+
+    <script>
+    (function() {
+        const isElectron = typeof window.api !== 'undefined';
+        const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+        // =====================
+        // TODOs
+        // =====================
+        const todos = {};
+        DAYS.forEach(d => todos[d] = []);
+        let currentTodoDay = "Mon";
+
+        async function loadTodos(day) {
+            if (isElectron) {
+                try {
+                    const rows = await window.api.getTodosByDay(day);
+                    todos[day] = rows.map(r => ({ id: r.id, text: r.text, done: !!r.done }));
+                } catch (e) {
+                    console.error('Failed to load todos', e);
+                }
+            }
+            renderTodoList();
+        }
+
+        function renderTodoList() {
+            const list = document.getElementById("todoList");
+            const dayTodos = todos[currentTodoDay] || [];
+            list.innerHTML = "";
+
+            dayTodos.forEach((item, index) => {
+                const displayText = item.done ? `<s>${item.text}</s>` : item.text;
+                const color = item.color || '#d0d0d0';
+
+                list.innerHTML += `
+                    <div class="todo-item" style="border-left:6px solid ${color};">
+                        <span>${displayText}</span>
+                        <div style="display:flex; gap:8px;">
+                            <span style="cursor:pointer" title="Mark as done/undone" onclick="toggleDone(${index})">✔️</span>
+                            <span style="cursor:pointer" title="Postpone to next day" onclick="postponeTask(${index})">⏭️</span>
+                            <span style="cursor:pointer" title="Cancel task" onclick="cancelTask(${index})">✖️</span>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        window.addTask = async function() {
+            const input = document.getElementById("taskInput");
+            const value = input.value.trim();
+            if (!value) return;
+
+            if (isElectron) {
+                try {
+                    const res = await window.api.addTodo(currentTodoDay, value);
+                    todos[currentTodoDay].push({ id: res.id, text: value, done: false });
+                } catch (e) {
+                    console.error('Failed to add todo', e);
+                    todos[currentTodoDay].push({ id: Date.now(), text: value, done: false });
+                }
+            } else {
+                todos[currentTodoDay].push({ id: Date.now(), text: value, done: false });
+            }
+
+            input.value = "";
+            renderTodoList();
+        };
+
+        window.cancelTask = async function(i) {
+            const item = todos[currentTodoDay][i];
+            if (!item) return;
+
+            if (isElectron && item.id) {
+                try { await window.api.deleteTodo(item.id); } catch (e) { console.error('Failed to delete todo', e); }
+            }
+
+            todos[currentTodoDay].splice(i, 1);
+            renderTodoList();
+        };
+
+        window.toggleDone = async function(i) {
+            const item = todos[currentTodoDay][i];
+            if (!item) return;
+
+            item.done = !item.done;
+            if (isElectron && item.id) {
+                try { await window.api.updateTodoDone(item.id, item.done); } catch (e) { console.error('Failed to update todo', e); }
+            }
+            todos[currentTodoDay].sort((a, b) => a.done - b.done);
+            renderTodoList();
+        };
+
+        window.postponeTask = async function(i) {
+            const item = todos[currentTodoDay][i];
+            if (!item) return;
+            const orderIndex = DAYS.indexOf(currentTodoDay);
+            const nextDay = DAYS[(orderIndex + 1) % DAYS.length];
+
+            if (isElectron && item.id) {
+                try { await window.api.updateTodoDay(item.id, nextDay); } catch (e) { console.error('Failed to update todo day', e); }
+            }
+
+            todos[currentTodoDay].splice(i, 1);
+            todos[nextDay].push(item);
+            renderTodoList();
+        };
+
+        function bindTodoDayButtons() {
+            const selector = document.getElementById('todoDaySelector');
+            if (!selector) return;
+            const buttons = selector.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentTodoDay = btn.innerText;
+                    buttons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    loadTodos(currentTodoDay);
+                });
+            });
+        }
+
+        // =====================
+        // TIMER + STUDY
+        // =====================
+        let timerInterval = null;
+        let secondsLeft = 1500;
+        let mode = 'work';
+        const log = [];
+
+        function updateDisplay() {
+            const m = Math.floor(secondsLeft / 60).toString().padStart(2, '0');
+            const s = (secondsLeft % 60).toString().padStart(2, '0');
+            document.getElementById("timerDisplay").innerText = `${m}:${s}`;
+        }
+
+        function internalStartTimer() {
+            const workMin = parseInt(document.getElementById("workInput").value) || 25;
+            const breakMin = parseInt(document.getElementById("breakInput").value) || 5;
+            secondsLeft = (mode === 'work' ? workMin : breakMin) * 60;
+            updateDisplay();
+
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                secondsLeft--;
+                updateDisplay();
+                if (secondsLeft <= 0) {
+                    clearInterval(timerInterval);
+                    finishPeriod();
+                }
+            }, 1000);
+        }
+
+        window.pauseTimer = function() {
+            if (timerInterval) clearInterval(timerInterval);
+        };
+
+        window.resetTimer = function() {
+            window.pauseTimer();
+            const workMin = parseInt(document.getElementById("workInput").value) || 25;
+            secondsLeft = workMin * 60;
+            mode = 'work';
+            updateDisplay();
+        };
+
+        const studyStats = {};
+        let selectedCourse = null;
+        let donutSlices = [];
+
+        window.startTimer = function() {
+            if (mode === 'work') {
+                openModal();
+            } else {
+                internalStartTimer();
+            }
+        };
+
+        function finishPeriod() {
+            const now = new Date().toLocaleTimeString();
+            log.push(`${mode === 'work' ? 'Work' : 'Break'} session completed at ${now}`);
+            renderLog();
+
+            if (mode === 'work' && selectedCourse) {
+                const workMin = parseInt(document.getElementById("workInput").value) || 25;
+                recordStudySession(selectedCourse, workMin);
+            }
+
+            mode = (mode === 'work') ? 'break' : 'work';
+        }
+
+        function renderLog() {
+            const ul = document.getElementById("sessionLog");
+            ul.innerHTML = "";
+            log.forEach(item => {
+                ul.innerHTML += `<li>${item}</li>`;
+            });
+        }
+
+        async function recordStudySession(course, minutes) {
+            if (isElectron) {
+                try { await window.api.addStudySession(course, minutes); } catch (e) { console.error('Failed to save study session', e); }
+            }
+            if (!studyStats[course]) studyStats[course] = 0;
+            studyStats[course] += minutes;
+            updateDonut();
+            drawLabels();
+        }
+
+        async function loadStudyStats() {
+            if (isElectron) {
+                try {
+                    const rows = await window.api.getStudySessions();
+                    Object.keys(studyStats).forEach(k => delete studyStats[k]);
+                    rows.forEach(r => {
+                        if (!studyStats[r.course]) studyStats[r.course] = 0;
+                        studyStats[r.course] += r.minutes;
+                    });
+                } catch (e) {
+                    console.error('Failed to load study stats', e);
+                }
+            }
+            updateDonut();
+            drawLabels();
+        }
+
+        // =====================
+        // SCHEDULE
+        // =====================
+        const schedule = {};
+        DAYS.forEach(d => schedule[d] = []);
+        let currentScheduleDay = 'Mon';
+
+        async function loadSchedule(day) {
+            if (isElectron) {
+                try {
+                    const rows = await window.api.getScheduleByDay(day);
+                    schedule[day] = rows.map(r => ({
+                        id: r.id,
+                        name: r.name,
+                        time: r.time,
+                        prof: r.prof,
+                        room: r.room,
+                        color: r.color
+                    }));
+                } catch (e) {
+                    console.error('Failed to load schedule', e);
+                }
+            }
+            renderSchedule();
+        }
+
+        window.changeScheduleDay = function(day, btn) {
+            currentScheduleDay = day;
+            const container = document.getElementById('scheduleDaySelector');
+            const buttons = container.querySelectorAll('button');
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadSchedule(day);
+        };
+
+        window.addSchedule = async function() {
+            const name = document.getElementById("courseName").value.trim();
+            const time = document.getElementById("courseTime").value;
+            const prof = document.getElementById("courseProf").value.trim();
+            const room = document.getElementById("courseRoom").value.trim();
+            const color = document.getElementById("courseColor").value;
+            if (!name) return;
+
+            if (isElectron) {
+                try {
+                    await window.api.addCourse({
+                        day: currentScheduleDay,
+                        name,
+                        time: time || null,
+                        prof: prof || null,
+                        room: room || null,
+                        color: color || null
+                    });
+                } catch (e) {
+                    console.error('Failed to add course', e);
+                }
+            } else {
+                schedule[currentScheduleDay].push({ name, time, prof, room, color });
+            }
+
+            document.getElementById("courseName").value = "";
+            document.getElementById("courseTime").value = "";
+            document.getElementById("courseProf").value = "";
+            document.getElementById("courseRoom").value = "";
+            document.getElementById("courseColor").value = "#a6c8ff";
+            loadSchedule(currentScheduleDay);
+        };
+
+        window.deleteSchedule = async function(i) {
+            const item = schedule[currentScheduleDay][i];
+            if (!item) return;
+            if (isElectron && item.id) {
+                try { await window.api.deleteCourse(item.id); } catch (e) { console.error('Failed to delete course', e); }
+            }
+            schedule[currentScheduleDay].splice(i, 1);
+            renderSchedule();
+        };
+
+        function renderSchedule() {
+            const list = document.getElementById("scheduleList");
+            list.innerHTML = "";
+
+            schedule[currentScheduleDay]
+                .slice()
+                .sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"))
+                .forEach((item, index) => {
+                    const color = item.color || '#d0d0d0';
+                    list.innerHTML += `
+                        <div class="todo-item" 
+                             style="border-left:6px solid ${color}; display:flex; flex-direction:column; align-items:flex-start; gap:6px;">
+                            <strong>${item.name}</strong>
+                            <span>${item.time ? item.time : "Time: -"}</span>
+                            ${item.prof ? `<span>Prof: ${item.prof}</span>` : ""}
+                            ${item.room ? `<span>Room: ${item.room}</span>` : ""}
+                            <button onclick="deleteSchedule(${index})" style="margin-top:6px; padding:4px 8px; border:none; border-radius:6px; background:#e8ecf1; cursor:pointer;">Delete</button>
+                        </div>`;
+                });
+        }
+
+        // =====================
+        // STUDY MODAL & DONUT
+        // =====================
+        function openModal() {
+            fillCourseOptions();
+            document.getElementById('studyModal').style.display = 'flex';
+        }
+
+        window.closeModal = function() {
+            document.getElementById('studyModal').style.display = 'none';
+        };
+
+        function fillCourseOptions() {
+            const select = document.getElementById('studyCourse');
+            select.innerHTML = '';
+            const allCourses = Object.values(schedule).flat();
+            if (allCourses.length === 0) {
+                select.innerHTML = '<option value="">No courses yet</option>';
+                return;
+            }
+            allCourses.forEach(c => {
+                select.innerHTML += `<option value="${c.name}">${c.name}</option>`;
+            });
+        }
+
+        window.confirmCourse = function() {
+            const sel = document.getElementById('studyCourse');
+            selectedCourse = sel.value;
+            window.closeModal();
+            internalStartTimer();
+        };
+
+        function updateDonut() {
+            const canvas = document.getElementById('donutChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const total = Object.values(studyStats).reduce((a, b) => a + b, 0);
+            if (total === 0) {
+                donutSlices = [];
+                return;
+            }
+
+            donutSlices = [];
+            let start = 0;
+            const allCourses = Object.values(schedule).flat();
+
+            Object.keys(studyStats).forEach(course => {
+                const courseObj = allCourses.find(c => c.name === course);
+                const color = (courseObj && courseObj.color) || '#888';
+                const slice = (studyStats[course] / total) * Math.PI * 2;
+
+                const end = start + slice;
+                donutSlices.push({ course, color, start, end });
+
+                ctx.beginPath();
+                ctx.moveTo(150, 150);
+                ctx.arc(150, 150, 100, start, end);
+                ctx.closePath();
+                ctx.fillStyle = color;
+                ctx.fill();
+
+                start = end;
+            });
+
+            // inner cutout
+            ctx.beginPath();
+            ctx.fillStyle = '#fff';
+            ctx.arc(150, 150, 60, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawLabels() {
+            const canvas = document.getElementById('donutChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            const total = Object.values(studyStats).reduce((a, b) => a + b, 0);
+            if (total === 0 || donutSlices.length === 0) return;
+
+            ctx.font = '13px Inter';
+            ctx.fillStyle = '#333';
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = '#555';
+
+            donutSlices.forEach(slice => {
+                const mid = (slice.start + slice.end) / 2;
+                const x = 150 + Math.cos(mid) * 110;
+                const y = 150 + Math.sin(mid) * 110;
+
+                const labelX = 150 + Math.cos(mid) * 150;
+                const labelY = 150 + Math.sin(mid) * 150;
+
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(labelX, labelY);
+                ctx.stroke();
+
+                const minutes = studyStats[slice.course] || 0;
+                ctx.fillText(`${slice.course}: ${minutes}m`, labelX + 5, labelY + 5);
+            });
+        }
+
+        // =====================
+        // INIT
+        // =====================
+        function init() {
+            bindTodoDayButtons();
+            loadTodos(currentTodoDay);
+            loadSchedule(currentScheduleDay);
+            loadStudyStats();
+            const workMin = parseInt(document.getElementById("workInput").value) || 25;
+            secondsLeft = workMin * 60;
+            updateDisplay();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+    })();
+    </script>
+</body>
+</html>
